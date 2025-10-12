@@ -1,14 +1,6 @@
 <template>
   <div class="app">
-
-    <PlayerCard
-      :name="currentGame.opponentName"
-      :avatar="currentGame.opponentAvatar"
-      color="black"
-      :status="opponent === 'Andreas' ? 'online' : 'engine'"
-    />
-
-    <div class="board-area">
+    <div class="mobile-opponent-selector" v-if="isMobile">
       <div class="opponent-selector-container">
         <label>Play against:</label>
         <OpponentSelector
@@ -29,6 +21,39 @@
             ]"
         />
       </div>
+    </div>
+
+    <PlayerCard
+      :name="currentGame.opponentName"
+      :avatar="currentGame.opponentAvatar"
+      color="black"
+      :status="opponent === 'Andreas' ? 'online' : 'engine'"
+    />
+
+    <div class="board-area">
+      <!-- Desktop: Opponent selector stays in board area -->
+      <div class="desktop-opponent-selector" v-if="!isMobile">
+        <div class="opponent-selector-container">
+          <label>Play against:</label>
+          <OpponentSelector
+              v-model="opponent"
+              :options="[
+                  {
+                  value: 'Andreas',
+                  name: 'Andreas',
+                  avatar: AndreasAvatar,
+                  status: 'online'
+                  },
+                  {
+                  value: 'python',
+                  name: 'Python Engine',
+                  avatar: PythonAvatar,
+                  status: 'engine'
+                  }
+              ]"
+          />
+        </div>
+      </div>
 
       <div class="board-wrapper">
         <TheChessboard
@@ -41,7 +66,7 @@
         <div class="eval-bar-container">
           <div
             class="eval-bar"
-            :style="{ height: evalBarHeight + '%' }"
+            :style="evalBarStyle"
             :title="evalText"
           ></div>
         </div>
@@ -65,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted } from "vue";
 import { Chess } from "chess.js";
 import { TheChessboard } from "vue3-chessboard";
 import axios from "axios";
@@ -73,7 +98,6 @@ import AndreasAvatar from '../assets/goodchessplayer.jpg';
 import PlayerAvatar from '../assets/defaulyavatar.jpg';
 import PythonAvatar from '../assets/pythonimage.png';
 
-// Components
 import PlayerCard from './PlayerCard.vue'
 import ChatBox from './ChatBox.vue'
 import OpponentSelector from './OpponentSelector.vue'
@@ -83,7 +107,7 @@ const lastEvalCP = ref(null);
 const andreasTauntCount = ref(0);
 const MAX_TAUNTS = 3;
 
-// Game state management
+
 const games = ref({
   Andreas: {
     game: new Chess(),
@@ -113,6 +137,31 @@ const boardConfig = ref({
     free: false,
   },
 });
+
+//-------------------------------------------------------
+const isMobile = ref(false);
+
+const evalBarStyle = computed(() => {
+  if (isMobile.value) {
+    return { width: evalBarHeight.value + '%' };
+  } else {
+    return { height: evalBarHeight.value + '%' };
+  }
+});
+
+onMounted(() => {
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth <= 768;
+  };
+  
+  checkMobile();
+  window.addEventListener('resize', checkMobile);
+  
+  onUnmounted(() => {
+    window.removeEventListener('resize', checkMobile);
+  });
+});
+//-------------------------------------------------------
 
 let boardApi = null;
 let ignoreNextMoveEvent = false;
@@ -294,7 +343,7 @@ async function maybeTaunt(currentCP, move) {
   andreasTauntCount.value++;
 
   try {
-    const res = await axios.post("http://localhost:8000/taunt", {
+    const res = await axios.post("localhost:8000/taunt", {
       captured: captured ?? null,
       eval_jump: evalJump,
       fen: currentGame.value.game.fen()
@@ -309,7 +358,6 @@ async function maybeTaunt(currentCP, move) {
 
 
 </script>
-
 <style scoped>
 .app {
   max-width: 375px;
@@ -319,24 +367,131 @@ async function maybeTaunt(currentCP, move) {
   gap: 1.125rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-size: 0.75rem;
+  padding: 1rem;
+  box-sizing: border-box;
 }
 
 .app > * {
   width: 100%;
 }
 
-.board-area {
-  display: flex;
-  align-items: flex-start;
-  gap: 1.5rem;
-  padding-right: 165px;
-  margin-left: -165px;
+/* Mobile design */
+@media (max-width: 768px) {
+  .app {
+    max-width: 100%;
+    padding: 0.5rem;
+    gap: 1rem;
+  }
+  
+  .mobile-opponent-selector {
+    width: 100%;
+    order: -1;
+  }
+  
+  .desktop-opponent-selector {
+    display: none;
+  }
+  
+  .board-area {
+    flex-direction: column;
+    padding-right: 0;
+    margin-left: 0;
+    gap: 1rem;
+  }
+  
+  .opponent-selector-container {
+    width: 100%;
+    margin-top: 0;
+  }
+  
+  .board-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .eval-bar-container {
+    width: 100%;
+    height: 12px;
+    margin-left: 0;
+    margin-top: 6px;
+    flex-direction: row;
+  }
+  
+  .eval-bar {
+    height: 100%;
+  }
+  
+  .controls {
+    padding: 0.5rem;
+  }
+  
+  .controls button {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.875rem;
+  }
+
+  .opponent-selector-container :deep(.card) {
+    padding: 1rem;
+  }
+  
+  .chat-input button,
+  .controls button {
+    min-height: 44px;
+  }
+  
+  .player-card {
+    padding: 1rem;
+  }
 }
 
-.opponent-selector-container {
-  width: 150px;
-  flex-shrink: 0;
-  margin-top: 0.75rem;
+/* Desktop styles */
+@media (min-width: 769px) {
+  .mobile-opponent-selector {
+    display: none;
+  }
+  
+  .desktop-opponent-selector {
+    display: block;
+  }
+  
+  .board-area {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding-right: 165px;
+    margin-left: -165px;
+  }
+  
+  .opponent-selector-container {
+    width: 150px;
+    flex-shrink: 0;
+    margin-top: 0.75rem;
+  }
+  
+  .board-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    position: relative;
+    width: 100%;
+  }
+  
+  .eval-bar-container {
+    width: 10.5px;
+    background: linear-gradient(180deg, #f9d49c, #d76f00);
+    display: flex;
+    flex-direction: column-reverse;
+    border-radius: 4.5px;
+    overflow: hidden;
+    margin-left: 6px;
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+  }
+  
+  .eval-bar {
+    width: 100%;
+    background: linear-gradient(180deg, #24a148, #145a32);
+    transition: height 0.3s ease;
+  }
 }
 
 .opponent-selector-container label {
@@ -421,29 +576,14 @@ async function maybeTaunt(currentCP, move) {
   background-color: currentColor;
 }
 
-.board-wrapper {
-  display: flex;
-  flex-direction: row;
-  align-items: stretch;
-  position: relative;
-  width: 100%;
+:deep(.cg-wrap) {
+  max-width: 100%;
+  aspect-ratio: 1;
 }
 
-.eval-bar-container {
-  width: 10.5px;
-  background: linear-gradient(180deg, #f9d49c, #d76f00);
-  display: flex;
-  flex-direction: column-reverse;
-  border-radius: 4.5px;
-  overflow: hidden;
-  margin-left: 6px;
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
-}
-
-.eval-bar {
-  width: 100%;
-  background: linear-gradient(180deg, #24a148, #145a32);
-  transition: height 0.3s ease;
+:deep(.cg-board) {
+  max-width: 100%;
+  height: auto;
 }
 
 .chatbox {

@@ -1,3 +1,5 @@
+#define VIRGO_IMPLEMENTATION
+#include "virgo/virgo.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "board_adapter.h"
@@ -131,7 +133,6 @@ std::pair<int, uint16_t> negamax(Position &pos, int depth, int alpha, int beta, 
         int from_square = MOVE_FROM(move);
         auto captured_piece = pos.board[to_square];
         
-        // Prioritize captures
         if (captured_piece.first != virgo::EMPTY) {
             const int piece_values[] = {0, 100, 500, 320, 330, 10000, 900};
             score += piece_values[captured_piece.first] * 10;

@@ -1,3 +1,5 @@
+#define VIRGO_IMPLEMENTATION
+#include "virgo/virgo.h"
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include "board_adapter.h"
@@ -267,6 +269,6 @@ py::dict get_best_move_cpp(const std::string &fen, int time_ms) {
     return result;
 }
 
-PYBIND11_MODULE(engine_core, m) {
+PYBIND11_MODULE(engine_core2, m) {
     m.def("get_best_move_cpp", &get_best_move_cpp, "Get best move using Virgo board logic");
 }

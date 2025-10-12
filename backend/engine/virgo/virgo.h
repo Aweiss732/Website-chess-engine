@@ -30,6 +30,9 @@ SOFTWARE.
 #include <vector>
 #include <regex>
 #include <iostream>
+#include <cstring>
+#include <map>
+#include <unordered_map>
 
 #define ENCODE_MOVE(from, to, type) (0x0000u | (from) | ((to) << 6) | ((type) << 12))
 #define MOVE_FROM(move) ((move) & 0x3f)
@@ -37,6 +40,7 @@ SOFTWARE.
 #define MOVE_TYPE(move) (((move) >> 12) & 0xf)
 
 namespace {
+    
     uint64_t KINDERGARTEN[8][256];
     uint64_t KINDERGARTEN_ROTATED[8][256];
     uint64_t SQUARE_MASK[65];
@@ -737,12 +741,14 @@ namespace virgo {
                 continue;
             }
             if(std::tolower(c) == 'k') {
-                int color = std::isupper(c);
+                int color = std::isupper(static_cast<unsigned char>(c)) ? WHITE : BLACK;
+
                 kings[color]++;
             }
 
             if(std::isalpha(c)) {
-                int color = std::isupper(c);
+                int color = std::isupper(static_cast<unsigned char>(c)) ? WHITE : BLACK;
+
                 board.pieces[color][indexes.at(std::tolower(c))] |= 1ull << square;
                 board.squares[square++] = std::make_pair(indexes.at(std::tolower(c)), static_cast<Player>(color));
 

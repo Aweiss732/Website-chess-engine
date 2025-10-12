@@ -1,6 +1,5 @@
 // board_adapter.h
 #pragma once
-#define VIRGO_IMPLEMENTATION
 #include "virgo/virgo.h"
 #include <string>
 #include <vector>
