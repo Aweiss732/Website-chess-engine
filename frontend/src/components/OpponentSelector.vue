@@ -36,7 +36,7 @@ defineEmits(['update:modelValue']);
 
 .card {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   border: 2px solid transparent;
   padding: 0.5rem;
@@ -44,6 +44,7 @@ defineEmits(['update:modelValue']);
   cursor: pointer;
   transition: border 0.2s;
   background: #f9f9f9;
+  width: 100%;
 }
 
 .card.selected {
@@ -52,13 +53,20 @@ defineEmits(['update:modelValue']);
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
 }
 
 .name {
   font-weight: bold;
+  text-align: center;
 }
 
 .status {
@@ -66,6 +74,7 @@ defineEmits(['update:modelValue']);
   display: flex;
   align-items: center;
   color: #999;
+  text-align: left;
 }
 
 .status.online {
@@ -83,5 +92,6 @@ defineEmits(['update:modelValue']);
   display: inline-block;
   margin-right: 4px;
   background-color: currentColor;
+  flex-shrink: 0;
 }
 </style>

@@ -11,25 +11,48 @@
           <span v-html="escapeHtml(msg.text)"></span>
         </div>
       </div>
+      <div v-if="messages.length === 0" class="no-messages">
+        {{ emptyStateMessage }}
+      </div>
     </div>
     <form @submit.prevent="handleSend" class="chat-input">
-      <input v-model="input" type="text" placeholder="Say something..." />
-      <button type="submit">Send</button>
+      <input 
+        v-model="input" 
+        type="text" 
+        :placeholder="placeholder" 
+        :disabled="disabled"
+        :class="{ 'disabled': disabled }"
+      />
+      <button type="submit" :disabled="disabled">Send</button>
     </form>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, computed } from "vue";
 
 const props = defineProps({
   messages: Array,
+  disabled: {
+    type: Boolean,
+    default: false
+  },
+  placeholder: {
+    type: String,
+    default: "Say something..."
+  }
 });
 
 const emit = defineEmits(["send"]);
 
 const input = ref("");
 const messagesContainer = ref(null);
+
+const emptyStateMessage = computed(() => {
+  return props.disabled 
+    ? "Chat will be available during the game" 
+    : "No messages yet. Start the conversation!";
+});
 
 watch(() => props.messages, async () => {
   await nextTick();
@@ -39,7 +62,7 @@ watch(() => props.messages, async () => {
 }, { deep: true, immediate: true });
 
 function handleSend() {
-  if (!input.value.trim()) return;
+  if (!input.value.trim() || props.disabled) return;
   emit("send", input.value.trim());
   input.value = "";
 }
@@ -52,11 +75,12 @@ function escapeHtml(unsafe) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
-
 </script>
 
 <style scoped>
 .chatbox {
+  width: 100%;
+  max-width: 100%;
   border-radius: 9px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -92,13 +116,14 @@ function escapeHtml(unsafe) {
 }
 
 .messages {
-  height: 150px;
+  height: 200px;
   overflow-y: auto;
-  padding: 0.75rem;
+  padding: 0.70rem;
   display: flex;
   flex-direction: column;
   gap: 0.5625rem;
   scroll-behavior: smooth;
+  font-size: 0.8rem;
 }
 
 .messages::-webkit-scrollbar {
@@ -121,7 +146,7 @@ function escapeHtml(unsafe) {
 
 .message {
   display: flex;
-  max-width: 85%;
+  max-width: 100%;
 }
 
 .message.ai {
@@ -133,7 +158,7 @@ function escapeHtml(unsafe) {
 }
 
 .message-content {
-  padding: 0.5625rem 0.75rem;
+  padding: 0.4625rem 0.75rem;
   border-radius: 9px;
   word-wrap: break-word;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -164,6 +189,14 @@ function escapeHtml(unsafe) {
   opacity: 0.9;
 }
 
+.no-messages {
+  text-align: center;
+  color: #a0aec0;
+  font-style: italic;
+  padding: 2rem 1rem;
+  font-size: 0.9rem;
+}
+
 .chat-input {
   display: flex;
   padding: 0.75rem;
@@ -188,6 +221,17 @@ function escapeHtml(unsafe) {
   box-shadow: 0 0 0 3px rgba(215, 111, 0, 0.1);
 }
 
+.chat-input input.disabled {
+  background: #f5f5f5;
+  color: #a0aec0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.chat-input input.disabled::placeholder {
+  color: #a0aec0;
+}
+
 .chat-input button {
   background: linear-gradient(135deg, #ff8a04 0%, #d76f00 100%);
   color: white;
@@ -200,8 +244,41 @@ function escapeHtml(unsafe) {
   box-shadow: 0 2px 4px rgba(215, 111, 0, 0.3);
 }
 
-.chat-input button:hover {
+.chat-input button:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(215, 111, 0, 0.4);
+}
+
+.chat-input button:disabled {
+  background: linear-gradient(135deg, #cccccc 0%, #999999 100%);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.7;
+}
+
+@media (max-width: 768px) {
+  .chatbox {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+  
+  .messages {
+    height: 120px;
+    padding: 0.5rem;
+    font-size: 0.8rem;
+  }
+  
+  .message {
+    max-width: 90%;
+  }
+  
+  .chat-input {
+    padding: 0.5rem;
+  }
+  
+  .chat-input input {
+    font-size: 16px;
+  }
 }
 </style>

@@ -322,6 +322,35 @@ struct Position {
         return score;
     }
 
+    bool is_in_check() {
+        Player current = board.get_next_to_move();
+        Player opponent = (current == WHITE) ? BLACK : WHITE;
+
+        board.next = opponent;
+
+        std::vector<uint16_t> opponent_moves;
+        if (opponent == WHITE) {
+            virgo::get_legal_moves<WHITE>(board, opponent_moves);
+        } else {
+            virgo::get_legal_moves<BLACK>(board, opponent_moves);
+        }
+
+        board.next = current;
+
+        uint64_t king_bb = (current == WHITE) ? 
+            board.get_bitboard<WHITE>(KING) : 
+            board.get_bitboard<BLACK>(KING);
+        int king_square = bit::pop_lsb_index(king_bb);
+
+        for (auto move : opponent_moves) {
+            if (MOVE_TO(move) == king_square) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
     int evaluate() {
         bool endgame = is_endgame();
         int score = 0;

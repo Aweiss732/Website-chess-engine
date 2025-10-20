@@ -97,9 +97,14 @@ std::pair<int, uint16_t> negamax(Position &pos, int depth, int alpha, int beta, 
     
     auto moves = pos.get_legal_moves();
     if (moves.empty()) {
-        // Checkmate or stalemate detection
-        bool in_check = false;
-        return {-100000 + depth, 0};
+        bool in_check = pos.is_in_check();
+        if (in_check) {
+            // Checkmate
+            return {-100000 + depth, 0};
+        } else {
+            // Stalemate
+            return {0, 0};
+        }
     }
     
     uint64_t key = simple_hash(pos);

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import chess
 from engine.engine_strong import get_best_move as get_best_move_python
 from engine.engine_strong_cpp import get_best_move
+from engine.engine_connect5 import get_best_move as get_best_move_connect5
 import os
 import requests
 from typing import Optional
@@ -75,9 +76,10 @@ def get_prompt(persona: str, eval_ctx: str) -> str:
         "You are a cocky and very skilled chess player playing against a human" 
         "Interpret pronouns this way: When they say 'my'/'me', they mean themself/their own. When they say 'you' that refers to you as the system. "
         "Reply in exactly one short sentence (no more than 20 words)."
+        "Do not mention the word count. Just send out a message like how you would say it in a normal conversation"
         "Be VERY COCKY and VERY confident. Be offensive and insulting."
         "Do not be specific in whats happening on the chess board."
-        "Talk a bit like a you are from the 1700s carribean. You love rum and like to talk about rum, Use methators with rum. Call the opponent things such as 'matey' or 'landlubber'"
+        "Talk like a you are from the 1700s carribean. You love rum and like to talk about rum, Use methators with rum. Call the opponent things such as 'matey' or 'landlubber'"
         f"Here is the current evalutation: {eval_ctx}. If score is greater than 0 you are losing. If score is less negative you are winning."
     )
 
@@ -163,11 +165,13 @@ def taunt(req: TauntRequest):
     context = " ".join(context_parts) or "You are playing extremely well."
 
     system_prompt = (
-        "You are a cocky and very skilled chess player named Andreas, talking trash to your opponent.\n"
-        "Speak like you're from the 1700s Caribbean. Full of swagger, insults, and love for rum.\n"
+        "You are a skilled chess player, talking trash to your opponent.\n"
+        "Speak like you're from the 1700s Caribbean. \n"
+        "Be VERY COCKY and VERY confident. Be offensive and insulting."
         "Use metaphors. Call the opponent things like 'matey', 'landlubber', or 'scallywag'.\n"
-        "Make it short (under 20 words). Be reactive to the situation described.\n"
+        "Make it short (under 20 words). Be reactive to, and mention the situation described.\n"
         f"Context: {context}"
+        "IMPORTANT: Do NOT mention the word count."
     )
 
     headers = {
@@ -203,6 +207,7 @@ def taunt(req: TauntRequest):
                 continue
 
             content = choices[0]["message"]["content"].strip()
+            content = content.replace("<|begin▁of▁sentence|>", "").replace("<｜begin▁of▁sentence｜>", "").strip()
             if "\n" in content:
                 content = content.split("\n")[0].strip()
 
@@ -213,3 +218,84 @@ def taunt(req: TauntRequest):
             print(f"[TAUNT] Model failed: {model_name} — {e}")
 
     raise HTTPException(status_code=502, detail="All language models failed to provide a taunt.")
+
+
+
+class ConnectFiveMoveRequest(BaseModel):
+    board: str
+    time_ms: int = 1000
+
+@app.post("/connect-five-move")
+async def connect_five_move(req: ConnectFiveMoveRequest):
+    if not isinstance(req.board, str) or len(req.board) < 225:
+        return {"row": -1, "col": -1}
+
+
+    result = get_best_move_connect5(req.board[:225], req.time_ms)
+    #print(result)
+    return {"row": result["row"], "col": result["col"], "eval": result.get("eval", 0)}
+
+
+class ConnectFiveChatRequest(BaseModel):
+    message: str
+    board: str
+    move_count: int
+
+@app.post("/connect-five-chat")
+def connect_five_chat(req: ConnectFiveChatRequest):
+    if not OPENROUTER_KEY:
+        raise HTTPException(status_code=500, detail="Chat backend not configured")
+    system_prompt = (
+        "You are Andreas, a skilled Connect Five player. "
+        "Speak like a brittish pub lad: casual british banter"
+        "Be VERY COCKY and confident. "
+        "Keep responses under 20 words. "
+        f"Current game: {req.move_count} moves played."
+    )
+    
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_KEY}"
+    }
+
+    MODEL_CANDIDATES = [
+        "deepseek/deepseek-chat-v3.1:free",
+        "google/gemini-2.0-flash-exp:free",
+        "tngtech/deepseek-r1t2-chimera:free",
+        "z-ai/glm-4.5-air:free",
+        "qwen/qwen3-235b-a22b:free",
+    ]
+
+    for model_name in MODEL_CANDIDATES:
+        payload = {
+            "model": model_name,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": req.message}
+            ],
+            "max_tokens": 40,
+            "temperature": 0.8
+        }
+
+        try:
+            r = requests.post("https://openrouter.ai/api/v1/chat/completions", json=payload, headers=headers, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+
+            choices = data.get("choices")
+            if not choices or not choices[0].get("message", {}).get("content"):
+                continue  # try next model
+
+            content = choices[0]["message"]["content"].strip()
+            content = content.replace("<|begin▁of▁sentence|>", "").replace("<｜begin▁of▁sentence｜>", "").strip()
+            if "\n" in content:
+                content = content.split("\n")[0].strip()
+            if len(content.split()) > 30:
+                content = "Nice try — but let's keep it short."
+
+            print(f"[CHAT] Model used: {model_name}")
+            return {"reply": content}
+
+        except requests.RequestException as e:
+            print(f"[CHAT] Model failed: {model_name} — {e}")
+
+    raise HTTPException(status_code=502, detail="All language models failed to respond.")

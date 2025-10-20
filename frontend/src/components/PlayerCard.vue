@@ -6,7 +6,7 @@
         {{ name }}
         <span v-if="status" class="status-indicator" :class="status">
           <span class="dot"></span>
-          {{ status === 'engine' ? 'Engine' : 'Online' }}
+          {{ statusText }}
         </span>
       </div>
     </div>
@@ -14,11 +14,23 @@
 </template>
 
 <script setup>
-defineProps({
+import { computed } from "vue";
+
+const props = defineProps({
   name: String,
   avatar: String,
   color: String,
-  status: String // online or engine or null
+  status: String // online, engine, searching, ready, or null
+});
+
+const statusText = computed(() => {
+  switch (props.status) {
+    case 'online': return 'Online';
+    case 'engine': return 'Engine';
+    case 'searching': return 'Searching';
+    case 'ready': return 'Ready';
+    default: return '';
+  }
 });
 </script>
 
@@ -33,7 +45,6 @@ defineProps({
   border-radius: 12px;
   border: 1px solid #e2d6c9;
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  
 }
 
 .avatar {
@@ -75,5 +86,19 @@ defineProps({
 
 .status-indicator.engine .dot {
   background-color: #797571;
+}
+
+.status-indicator.searching .dot {
+  background-color: #d69e2e;
+  animation: pulse 1.5s infinite;
+}
+
+.status-indicator.ready .dot {
+  background-color: #38a169;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 </style>
