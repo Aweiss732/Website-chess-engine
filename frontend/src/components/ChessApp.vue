@@ -403,10 +403,10 @@ async function makeAiMove() {
 
   try {
     const url = opponent.value === "python"
-      //? "http://localhost:8000/bestmove-python"
-      //: "http://localhost:8000/bestmove";
-      ? "/bestmove-python"
-      : "/bestmove";
+      ? "http://localhost:8000/bestmove-python"
+      : "http://localhost:8000/bestmove";
+      //? "/bestmove-python"
+      //: "/bestmove";
 
     const res = await axios.post(url, {
       fen: currentGame.value.game.fen(),

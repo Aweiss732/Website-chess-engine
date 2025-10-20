@@ -323,27 +323,24 @@ struct Position {
     }
 
     bool is_in_check() {
-        Player current = board.get_next_to_move();
-        Player opponent = (current == WHITE) ? BLACK : WHITE;
+        virgo::Player current = board.get_next_to_move();
 
-        board.next = opponent;
+        virgo::Chessboard temp_board = board;
+
+        int king_square = (current == virgo::WHITE) ? 
+            temp_board.king_square<virgo::WHITE>() : 
+            temp_board.king_square<virgo::BLACK>();
 
         std::vector<uint16_t> opponent_moves;
-        if (opponent == WHITE) {
-            virgo::get_legal_moves<WHITE>(board, opponent_moves);
+        if (current == virgo::WHITE) {
+            virgo::get_legal_moves<virgo::BLACK>(temp_board, opponent_moves);
         } else {
-            virgo::get_legal_moves<BLACK>(board, opponent_moves);
+            virgo::get_legal_moves<virgo::WHITE>(temp_board, opponent_moves);
         }
-
-        board.next = current;
-
-        uint64_t king_bb = (current == WHITE) ? 
-            board.get_bitboard<WHITE>(KING) : 
-            board.get_bitboard<BLACK>(KING);
-        int king_square = bit::pop_lsb_index(king_bb);
-
+        
         for (auto move : opponent_moves) {
-            if (MOVE_TO(move) == king_square) {
+            int to_square = (move >> 6) & 0x3F;
+            if (to_square == king_square) {
                 return true;
             }
         }
