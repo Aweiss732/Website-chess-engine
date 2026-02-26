@@ -8,6 +8,8 @@ from engine.engine_connect5 import get_best_move as get_best_move_connect5
 import os
 import requests
 from typing import Optional
+import uuid
+from collections import defaultdict
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -17,11 +19,12 @@ if not OPENROUTER_KEY:
     print("WARNING: OPENROUTER_KEY not set; /chat will return 500")
 
 MODEL_CANDIDATES = [
-    "deepseek/deepseek-chat-v3.1:free",
-    "google/gemini-2.0-flash-exp:free",
-    "tngtech/deepseek-r1t2-chimera:free",
+    "stepfun/step-3.5-flash:free",
+    "arcee-ai/trinity-large-preview:free",
+    "openai/gpt-oss-120b:free",
     "z-ai/glm-4.5-air:free",
-    "qwen/qwen3-235b-a22b:free",
+    "nvidia/nemotron-3-nano-30b-a3b:free",
+    "qwen/qwen3-235b-a22b-thinking-2507"
 ]
 
 
@@ -101,11 +104,12 @@ def chat(req: ChatRequest):
     }
 
     MODEL_CANDIDATES = [
-        "deepseek/deepseek-chat-v3.1:free",
-        "google/gemini-2.0-flash-exp:free",
-        "tngtech/deepseek-r1t2-chimera:free",
+        "stepfun/step-3.5-flash:free",
+        "arcee-ai/trinity-large-preview:free",
+        "openai/gpt-oss-120b:free",
         "z-ai/glm-4.5-air:free",
-        "qwen/qwen3-235b-a22b:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
+        "qwen/qwen3-235b-a22b-thinking-2507"
     ]
 
     for model_name in MODEL_CANDIDATES:
@@ -175,15 +179,18 @@ def taunt(req: TauntRequest):
     )
 
     headers = {
-        "Authorization": f"Bearer {OPENROUTER_KEY}"
+        "Authorization": f"Bearer {OPENROUTER_KEY}",
+        "HTTP-Referer": "https://theandreasweiss.com",
+        "X-Title": "Chess App"
     }
 
     MODEL_CANDIDATES = [
-        "deepseek/deepseek-chat-v3.1:free",
-        "google/gemini-2.0-flash-exp:free",
-        "tngtech/deepseek-r1t2-chimera:free",
+        "stepfun/step-3.5-flash:free",
+        "arcee-ai/trinity-large-preview:free",
+        "openai/gpt-oss-120b:free",
         "z-ai/glm-4.5-air:free",
-        "qwen/qwen3-235b-a22b:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
+        "qwen/qwen3-235b-a22b-thinking-2507"
     ]
 
     for model_name in MODEL_CANDIDATES:
@@ -258,11 +265,12 @@ def connect_five_chat(req: ConnectFiveChatRequest):
     }
 
     MODEL_CANDIDATES = [
-        "deepseek/deepseek-chat-v3.1:free",
-        "google/gemini-2.0-flash-exp:free",
-        "tngtech/deepseek-r1t2-chimera:free",
+        "stepfun/step-3.5-flash:free",
+        "arcee-ai/trinity-large-preview:free",
+        "openai/gpt-oss-120b:free",
         "z-ai/glm-4.5-air:free",
-        "qwen/qwen3-235b-a22b:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free",
+        "qwen/qwen3-235b-a22b-thinking-2507"
     ]
 
     for model_name in MODEL_CANDIDATES:

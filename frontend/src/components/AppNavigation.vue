@@ -10,7 +10,7 @@
           class="nav-link"
           :class="{ active: $route.path === '/chess' }"
         >
-          <span class="nav-icon">♛</span>
+          <span class="nav-icon">♙</span>
           <span class="nav-text">Chess</span>
         </router-link>
         <router-link 
@@ -21,11 +21,20 @@
           <span class="nav-icon">⍉</span>
           <span class="nav-text">Connect 5</span>
         </router-link>
+        <router-link 
+          to="/queens" 
+          class="nav-link"
+          :class="{ active: $route.path === '/queens' }"
+        >
+          <span class="nav-icon">♛</span>
+          <span class="nav-text">Queens</span>
+        </router-link>
         <a 
           href="https://github.com/Aweiss732/Website-chess-engine" 
           target="_blank" 
           class="nav-link github-link"
         >
+           <!--𝔊 <span class="nav-icon">𝔖</span>𝔤 𝔾-->
           <span class="nav-text">GitHub</span>
         </a>
       </div>
